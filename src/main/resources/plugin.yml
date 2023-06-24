@@ -1,0 +1,4 @@
+name: PaperKnows
+version: '${project.version}'
+main: online.vivaseikatsu.stra.paperknows.PaperKnows
+api-version: 1.18
