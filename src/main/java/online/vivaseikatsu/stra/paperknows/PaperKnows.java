@@ -14,6 +14,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -39,7 +40,7 @@ public final class PaperKnows extends JavaPlugin implements Listener {
         getLogger().info("プラグインが無効になりました。");
     }
 
-    // エンティティに右クリックしたとき
+    // エンティティに右クリックしたとき(Atじゃない方)
     @EventHandler
     public void onPlayerInteractEntityEvent(PlayerInteractEntityEvent e) {
         // playerを取得
@@ -52,6 +53,30 @@ public final class PaperKnows extends JavaPlugin implements Listener {
         // メインハンドに持っているのが紙じゃなかった場合、終了
         if(!(mainHand.getType() == Material.PAPER)) return;
 
+        // イベントをキャンセル
+        e.setCancelled(true);
+
+
+        // エンティティ右クリックここまで
+    }
+
+
+    // エンティティに右クリックしたとき
+    @EventHandler
+    public void onPlayerInteractAtEntityEvent(PlayerInteractAtEntityEvent e) {
+        // playerを取得
+        Player p = e.getPlayer();
+        // スニークしてる場合のみ続行
+        if(!p.isSneaking()) return;
+
+        // メインハンドのアイテムを取得
+        ItemStack mainHand = p.getInventory().getItemInMainHand();
+        // メインハンドに持っているのが紙じゃなかった場合、終了
+        if(!(mainHand.getType() == Material.PAPER)) return;
+
+        // イベントをキャンセル
+        e.setCancelled(true);
+
         // クールタイム以内だった場合、終了
         if(!doCooldown(p,500)) return;
 
@@ -61,6 +86,12 @@ public final class PaperKnows extends JavaPlugin implements Listener {
         // 手懐け可能Mobのとき
         if(entity instanceof Tameable){
             ShowPetInfo(p,entity);
+            return;
+        }
+
+        // 村人のとき
+        if(entity instanceof Villager){
+            ShowVillagerInfo(p,entity);
             return;
         }
 
@@ -92,6 +123,9 @@ public final class PaperKnows extends JavaPlugin implements Listener {
         ItemStack mainHand = p.getInventory().getItemInMainHand();
         // メインハンドに持っているのが紙じゃなかった場合、終了
         if(!(mainHand.getType() == Material.PAPER)) return;
+
+        // イベントをキャンセル
+        e.setCancelled(true);
 
         // クールタイム以内だった場合、終了
         if(!doCooldown(p,500)) return;
@@ -188,6 +222,42 @@ public final class PaperKnows extends JavaPlugin implements Listener {
     }
 
 
+    // 村人情報を表示
+    private void ShowVillagerInfo(Player player,Entity entity){
+
+        if(!(entity instanceof Villager)) return;
+        Villager villager = (Villager) entity;
+
+        // タイトル
+        player.sendMessage(ChatColor.GRAY + "--[ Villager Status ]--");
+        // Mobの種類
+        player.sendMessage(ChatColor.WHITE + "MobType: " + villager.getType());
+        // 名前
+        if(villager.getCustomName() == null){
+            player.sendMessage(ChatColor.WHITE + "Name: " + ChatColor.GRAY + "-");
+        } else {
+            player.sendMessage(ChatColor.WHITE + "Name: " + villager.getCustomName());
+        }
+        // 体力
+        player.sendMessage(ChatColor.WHITE + "HP: " + (int) villager.getHealth() +
+                " / " + (int) villager.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+        // 出身地
+        player.sendMessage(ChatColor.WHITE + "Born at: " + villager.getVillagerType());
+        // 職業
+        player.sendMessage(ChatColor.WHITE + "Job: " + villager.getProfession());
+        // レベル
+        player.sendMessage(ChatColor.WHITE + "Lv: " + villager.getVillagerLevel());
+        // 経験値
+        player.sendMessage(ChatColor.WHITE + "Exp: " + villager.getVillagerExperience());
+
+        // 座標
+        player.sendMessage(ChatColor.GRAY + "(" + villager.getLocation().getBlockX() +","+ villager.getLocation().getBlockY() +","+ villager.getLocation().getBlockZ()+")");
+
+
+
+    }
+
+
     // Mob情報を表示
     private void ShowMobInfo(Player player,Entity entity){
 
@@ -246,6 +316,7 @@ public final class PaperKnows extends JavaPlugin implements Listener {
 
     // 蜂の巣情報ここまで
     }
+
 
     // レベルブロックの情報を表示
     private void ShowLevelledBlockInfo(Player player,Block block){
